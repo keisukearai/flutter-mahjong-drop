@@ -100,13 +100,13 @@ class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
   void onTapDown(TapDownEvent event) {
     if (!controller.isPlaying) return;
     final x = event.canvasPosition.x;
-    final third = size.x / 3;
-    if (x < third) {
+    final tileCenterX = _colX(controller.fallingCol);
+    final halfTile = BoardLayout.tileW / 2;
+    if (x < tileCenterX - halfTile) {
       controller.moveLeft();
-    } else if (x > 2 * third) {
+    } else if (x > tileCenterX + halfTile) {
       controller.moveRight();
     } else {
-      // drop immediately
       _fallingComp?.removeFromParent();
       _fallingComp = null;
       _trackedTile = null;

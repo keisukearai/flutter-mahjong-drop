@@ -32,6 +32,8 @@ class GameController extends ChangeNotifier {
   GameStatus status = GameStatus.playing;
   bool isPaused = false;
 
+  List<String> completedYaku = [];
+
   final GameMode mode;
 
   // Last event for animations
@@ -59,6 +61,7 @@ class GameController extends ChangeNotifier {
     lastEvent = const GameEvent();
     pendingWin = null;
     pendingScore = null;
+    completedYaku = [];
     _spawnNext();
   }
 
@@ -166,6 +169,12 @@ class GameController extends ChangeNotifier {
     score += (pts * comboBonus).round();
     combo++;
     level = (score ~/ 12000) + 1;
+
+    if (pendingScore != null) {
+      for (final y in pendingScore!.yakuList) {
+        if (!completedYaku.contains(y)) completedYaku.add(y);
+      }
+    }
 
     pendingWin = null;
     pendingScore = null;

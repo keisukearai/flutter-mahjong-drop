@@ -24,6 +24,25 @@ class GameOverOverlay extends StatelessWidget {
             ),
             Text('LV ${controller.level}   ×${controller.combo} コンボ',
                 style: const TextStyle(color: Colors.white54, fontSize: 13)),
+            if (controller.completedYaku.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text('獲得した役', style: TextStyle(color: Colors.white38, fontSize: 10, letterSpacing: 1)),
+              const SizedBox(height: 6),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 6,
+                runSpacing: 4,
+                children: controller.completedYaku.map((y) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C2A22),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFCFB53B), width: 0.8),
+                  ),
+                  child: Text(y, style: const TextStyle(color: Color(0xFFCFB53B), fontSize: 11)),
+                )).toList(),
+              ),
+            ],
             const SizedBox(height: 40),
             _Btn(label: 'もう一度', color: const Color(0xFF8B1A2B), onTap: controller.restart),
             const SizedBox(height: 12),
