@@ -38,8 +38,11 @@ class _GameScreenState extends State<GameScreen> {
     final yes = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1A237E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: const Color(0xFF1A0D0D),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFCFB53B), width: 1.5),
+        ),
         title: const Text('トップに戻る',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text('ゲームを終了してトップに戻りますか？',
@@ -47,12 +50,12 @@ class _GameScreenState extends State<GameScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル', style: TextStyle(color: Colors.white54)),
+            child: const Text('キャンセル', style: TextStyle(color: Color(0xFFCFB53B))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
-              foregroundColor: const Color(0xFF1A237E),
+              backgroundColor: const Color(0xFFCFB53B),
+              foregroundColor: const Color(0xFF1A0808),
             ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('戻る', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -73,6 +76,15 @@ class _GameScreenState extends State<GameScreen> {
         child: Stack(
           children: [
             GameWidget(game: _game),
+            if (_ctrl.status == GameStatus.playing)
+              Positioned(
+                top: 6,
+                right: 50,
+                child: _PauseButton(
+                  isPaused: _ctrl.isPaused,
+                  onTap: _ctrl.togglePause,
+                ),
+              ),
             Positioned(
               top: 6,
               right: 8,
@@ -83,6 +95,33 @@ class _GameScreenState extends State<GameScreen> {
             if (_ctrl.status == GameStatus.gameOver)
               GameOverOverlay(controller: _ctrl),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PauseButton extends StatelessWidget {
+  final bool isPaused;
+  final VoidCallback onTap;
+  const _PauseButton({required this.isPaused, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: const Color(0xCC1A237E),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0x66FFFFFF), width: 1),
+        ),
+        child: Icon(
+          isPaused ? Icons.play_arrow : Icons.pause,
+          color: Colors.white70,
+          size: 20,
         ),
       ),
     );

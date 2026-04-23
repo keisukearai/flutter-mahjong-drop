@@ -30,6 +30,7 @@ class GameController extends ChangeNotifier {
   int combo = 0;
   int level = 1;
   GameStatus status = GameStatus.playing;
+  bool isPaused = false;
 
   final GameMode mode;
 
@@ -54,6 +55,7 @@ class GameController extends ChangeNotifier {
     combo = 0;
     level = 1;
     status = GameStatus.playing;
+    isPaused = false;
     lastEvent = const GameEvent();
     pendingWin = null;
     pendingScore = null;
@@ -93,7 +95,13 @@ class GameController extends ChangeNotifier {
 
   double get fallSpeed => (160.0 + level * 20.0).clamp(0.0, 500.0);
 
-  bool get isPlaying => status == GameStatus.playing;
+  bool get isPlaying => status == GameStatus.playing && !isPaused;
+
+  void togglePause() {
+    if (status != GameStatus.playing) return;
+    isPaused = !isPaused;
+    notifyListeners();
+  }
 
   void moveLeft() {
     if (fallingCol > 0 && isPlaying) {

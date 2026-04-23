@@ -44,6 +44,11 @@ class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
   void _onControllerUpdate() {
     _syncFallingTile();
     _board.highlightWin = controller.pendingWin;
+    if (controller.isPaused) {
+      pauseEngine();
+    } else {
+      resumeEngine();
+    }
   }
 
   void _syncFallingTile() {
@@ -126,7 +131,7 @@ class _HudComponent extends Component with HasGameReference<MahjongGame> {
     _drawText(canvas, 'SCORE', const Color(0x99FFFFFF), 9, Offset(14, 6));
     _drawText(canvas, _fmt(controller.score), Colors.white, 18, Offset(14, 18));
     _drawText(canvas, '×${controller.combo}', const Color(0xFFFFD54F), 18, Offset(sw / 2 - 20, 16));
-    _drawText(canvas, 'LV.${controller.level}', const Color(0xFF80CBC4), 14, Offset(sw - 100, 20));
+    _drawText(canvas, 'LV.${controller.level}', const Color(0xFF80CBC4), 14, Offset(sw - 150, 20));
   }
 
   String _fmt(int n) {

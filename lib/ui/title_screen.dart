@@ -46,7 +46,7 @@ class TitleScreen extends StatelessWidget {
                     _ModeButton(
                       label: '通 常 モ ー ド',
                       subtitle: '三人麻雀（萬子は1・9のみ）',
-                      color: const Color(0xFFC62828),
+                      color: const Color(0xFF8B1A2B),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const GameScreen(mode: GameMode.sanma),
@@ -57,7 +57,7 @@ class TitleScreen extends StatelessWidget {
                     _ModeButton(
                       label: '簡 単 モ ー ド',
                       subtitle: '字牌のみ（東南西北白發中）',
-                      color: const Color(0xFF1565C0),
+                      color: const Color(0xFF1A3A6E),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const GameScreen(mode: GameMode.easy),
@@ -217,10 +217,16 @@ class _ModeButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [color, color.withValues(alpha: 0.8)],
+            colors: [
+              Color.lerp(color, Colors.white, 0.10)!,
+              Color.lerp(color, Colors.black, 0.25)!,
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
           borderRadius: BorderRadius.circular(14),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 16, offset: const Offset(0, 6))],
+          border: Border.all(color: const Color(0xFFCFB53B), width: 1.5),
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6))],
         ),
         child: Column(children: [
           Text(
