@@ -412,9 +412,13 @@ class TilePainter {
       )),
       textDirection: TextDirection.ltr,
     )..layout(maxWidth: rect.width);
+    final metrics = p.computeLineMetrics();
+    final dy = metrics.isNotEmpty
+        ? rect.center.dy - metrics.first.ascent / 2
+        : rect.top + (rect.height - p.height) / 2 + fontSize * 0.06;
     p.paint(canvas, Offset(
       rect.left + (rect.width - p.width) / 2,
-      rect.top + (rect.height - p.height) / 2 + fontSize * 0.06,
+      dy,
     ));
   }
 }

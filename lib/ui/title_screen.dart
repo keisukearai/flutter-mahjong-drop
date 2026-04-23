@@ -122,10 +122,14 @@ class _TilePreviewRowState extends State<_TilePreviewRow> {
   void initState() {
     super.initState();
     final rng = Random();
+    const winds = [HonorType.east, HonorType.south, HonorType.west, HonorType.north];
+    const dragons = [HonorType.haku, HonorType.hatsu, HonorType.chun];
     _tiles = [
       Tile.number(TileSuit.man, [1, 9][rng.nextInt(2)]),
       Tile.number(TileSuit.sou, rng.nextInt(9) + 1),
       Tile.number(TileSuit.pin, rng.nextInt(9) + 1),
+      Tile.honor(winds[rng.nextInt(winds.length)]),
+      Tile.honor(dragons[rng.nextInt(dragons.length)]),
     ];
   }
 
