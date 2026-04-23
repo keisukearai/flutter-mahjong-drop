@@ -96,7 +96,27 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  double get fallSpeed => (160.0 + level * 20.0).clamp(0.0, 500.0);
+  double get fallSpeed {
+    final baseSpeed = (160.0 + level * 20.0).clamp(0.0, 500.0);
+
+    // Find the minimum free rows across all columns (most crowded column)
+    int minFree = BoardState.rows - 1;
+    for (int c = 0; c < BoardState.cols; c++) {
+      final lr = board.landingRow(c);
+      final free = lr < 0 ? 0 : lr;
+      if (free < minFree) minFree = free;
+    }
+
+    // No change when board is mostly empty (minFree >= 8).
+    // Linear slowdown to 30% as the tallest stack approaches the top.
+    const int slowThreshold = 8;
+    const double minMultiplier = 0.3;
+    final multiplier = minFree >= slowThreshold
+        ? 1.0
+        : minMultiplier + (1.0 - minMultiplier) * (minFree / slowThreshold);
+
+    return baseSpeed * multiplier;
+  }
 
   bool get isPlaying => status == GameStatus.playing && !isPaused;
 
