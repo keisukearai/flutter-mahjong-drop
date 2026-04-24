@@ -1,12 +1,15 @@
 import '../mahjong/tile.dart';
 import '../mahjong/meld.dart';
 
+enum MeldShape { horizontal, vertical, lShape }
+
 /// A logical meld group formed on the board (3 cells that merged).
 class MeldGroup {
   final Meld meld;
-  // orientation: horizontal or vertical
-  final bool isHorizontal;
-  MeldGroup(this.meld, {required this.isHorizontal});
+  final MeldShape shape;
+  MeldGroup(this.meld, {required this.shape});
+
+  bool get isHorizontal => shape == MeldShape.horizontal;
 }
 
 sealed class BoardCell {

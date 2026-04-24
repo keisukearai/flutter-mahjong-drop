@@ -346,48 +346,93 @@ class TilePainter {
   ) {
     if (cellRects.length != 3) return;
     final outer = _boundingRect(cellRects);
-    const gap = 2.0;
+    const gap = 1.5;
 
-    if (isWinHighlight) {
+    final firstTile = group.meld.tiles.first;
+    final bg = _meldBgColor(firstTile);
+    final border = isWinHighlight ? const Color(0xFFFFD700) : _meldBorderColor(firstTile);
+    final glowColor = isWinHighlight
+        ? const Color(0x99FFD700)
+        : _meldBorderColor(firstTile).withValues(alpha: 0.35);
+
+    // Glow shadow
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(outer.inflate(5), const Radius.circular(16)),
+      Paint()
+        ..color = glowColor
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+    );
+
+    if (group.shape == MeldShape.lShape) {
+      // Draw each cell individually so the empty corner stays clear
+      for (final rect in cellRects) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect.inflate(2), const Radius.circular(10)),
+          Paint()..color = bg,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect.inflate(2), const Radius.circular(10)),
+          Paint()
+            ..color = border
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = isWinHighlight ? 2.8 : 2.2,
+        );
+      }
+    } else {
       canvas.drawRRect(
-        RRect.fromRectAndRadius(outer.inflate(4), const Radius.circular(16)),
+        RRect.fromRectAndRadius(outer.inflate(2), const Radius.circular(14)),
+        Paint()..color = bg,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(outer.inflate(2), const Radius.circular(14)),
         Paint()
-          ..color = const Color(0x88FFD700)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+          ..color = border
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = isWinHighlight ? 2.8 : 2.2,
       );
     }
-
-    // Suit-tinted background band
-    final firstTile = group.meld.tiles.first;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(outer.inflate(1.5), const Radius.circular(14)),
-      Paint()..color = firstTile.bgColor.withValues(alpha: 0.85),
-    );
-
-    // Gold border
-    final borderColor = isWinHighlight ? const Color(0xFFFFD700) : const Color(0xFFCFB53B);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(outer.inflate(1.5), const Radius.circular(14)),
-      Paint()
-        ..color = borderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isWinHighlight ? 2.5 : 1.8,
-    );
 
     for (int i = 0; i < 3; i++) {
       drawTile(canvas, group.meld.tiles[i], cellRects[i].deflate(gap));
     }
 
-    _drawMeldBadge(canvas, outer, group.meld.type);
+    _drawMeldBadge(canvas, outer, group.meld.type, isWinHighlight: isWinHighlight);
   }
 
-  static void _drawMeldBadge(Canvas canvas, Rect outer, MeldType type) {
-    final dotColor = type == MeldType.triplet
-        ? const Color(0xFFE53935)
-        : const Color(0xFF1E88E5);
-    canvas.drawCircle(Offset(outer.right - 5, outer.top + 5), 4, Paint()..color = dotColor);
-    canvas.drawCircle(Offset(outer.right - 5, outer.top + 5), 4,
-        Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1.2);
+  static Color _meldBgColor(Tile tile) {
+    if (tile.isHonor) return const Color(0xFFE1BEE7);
+    return switch (tile.suit) {
+      TileSuit.man   => const Color(0xFFFFCDD2),
+      TileSuit.pin   => const Color(0xFFBBDEFB),
+      TileSuit.sou   => const Color(0xFFC8E6C9),
+      TileSuit.honor => const Color(0xFFE1BEE7),
+    };
+  }
+
+  static Color _meldBorderColor(Tile tile) {
+    if (tile.isHonor) return const Color(0xFF7B1FA2);
+    return switch (tile.suit) {
+      TileSuit.man   => const Color(0xFFE53935),
+      TileSuit.pin   => const Color(0xFF1E88E5),
+      TileSuit.sou   => const Color(0xFF43A047),
+      TileSuit.honor => const Color(0xFF7B1FA2),
+    };
+  }
+
+  static void _drawMeldBadge(Canvas canvas, Rect outer, MeldType type, {bool isWinHighlight = false}) {
+    final badgeColor = isWinHighlight
+        ? const Color(0xFFFFD700)
+        : (type == MeldType.triplet ? const Color(0xFFE53935) : const Color(0xFF1E88E5));
+    final center = Offset(outer.right - 7, outer.top + 7);
+    canvas.drawCircle(center, 6,
+        Paint()..color = badgeColor..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
+    canvas.drawCircle(center, 6, Paint()..color = badgeColor);
+    canvas.drawCircle(center, 6,
+        Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1.5);
+    final label = type == MeldType.triplet ? '刻' : '順';
+    _drawCenteredText(canvas, label, Colors.white,
+        Rect.fromCenter(center: center, width: 12, height: 12), 8,
+        fontWeight: FontWeight.w900);
   }
 
   // ── helpers ──────────────────────────────────────────────────────

@@ -45,12 +45,11 @@ class BoardComponent extends Component with HasGameReference {
           final positions = board.positionsOf(group);
           if (positions.length != 3) continue;
 
-          // Sort positions correctly (left→right or top→bottom)
-          if (group.isHorizontal) {
-            positions.sort((a, b) => a.$2.compareTo(b.$2));
-          } else {
-            positions.sort((a, b) => a.$1.compareTo(b.$1));
-          }
+          // Sort positions by (row, col) — works for all shapes
+          positions.sort((a, b) {
+            final rowCmp = a.$1.compareTo(b.$1);
+            return rowCmp != 0 ? rowCmp : a.$2.compareTo(b.$2);
+          });
 
           final rects = positions.map((p) => BoardLayout.cellRect(p.$1, p.$2, sw)).toList();
           final isWin = highlightWin?.melds.any((m) => identical(m, group)) ?? false;
