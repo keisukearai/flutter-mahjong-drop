@@ -29,11 +29,6 @@ class TitleScreen extends StatelessWidget {
                 '牌を落として面子を作ろう！',
                 style: TextStyle(color: Colors.white60, fontSize: 14),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'アンコ（同じ牌3枚）・ジュンツ（連続3枚）',
-                style: TextStyle(color: Colors.white38, fontSize: 12),
-              ),
               const Spacer(flex: 2),
               const _TilePreviewRow(),
               const SizedBox(height: 8),
@@ -44,23 +39,35 @@ class TitleScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _ModeButton(
-                      label: '通 常 モ ー ド',
-                      subtitle: '三人麻雀（萬子は1・9のみ）',
-                      color: const Color(0xFF8B1A2B),
+                      label: '簡 単 モ ー ド',
+                      subtitle: '字牌のみ',
+                      color: const Color(0xFF1A3A6E),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const GameScreen(mode: GameMode.sanma),
+                          builder: (_) => const GameScreen(mode: GameMode.easy),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
                     _ModeButton(
-                      label: '簡 単 モ ー ド',
-                      subtitle: '字牌のみ（東南西北白發中）',
-                      color: const Color(0xFF1A3A6E),
+                      label: '通 常 モ ー ド',
+                      subtitle: '索子2〜8なし',
+                      color: const Color(0xFF2B6E1A),
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const GameScreen(mode: GameMode.easy),
+                          builder: (_) => const GameScreen(mode: GameMode.normal),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _ModeButton(
+                      label: '鬼 モ ー ド',
+                      subtitle: '全牌登場',
+                      color: const Color(0xFF7A1010),
+                      isOni: true,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const GameScreen(mode: GameMode.oni),
                         ),
                       ),
                     ),
@@ -179,8 +186,6 @@ class _MeldArrow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('▼', style: TextStyle(color: Colors.white38, fontSize: 14)),
-        const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
@@ -206,10 +211,16 @@ class _ModeButton extends StatelessWidget {
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
-  const _ModeButton({required this.label, required this.subtitle, required this.color, required this.onTap});
+  final bool isOni;
+  const _ModeButton({required this.label, required this.subtitle, required this.color, required this.onTap, this.isOni = false});
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = isOni ? const Color(0xFFFF6B35) : const Color(0xFFCFB53B);
+    final gradientColors = isOni
+        ? [const Color(0xFFBF3030), const Color(0xFF4A0A0A)]
+        : [Color.lerp(color, Colors.white, 0.10)!, Color.lerp(color, Colors.black, 0.25)!];
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -217,26 +228,31 @@ class _ModeButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color.lerp(color, Colors.white, 0.10)!,
-              Color.lerp(color, Colors.black, 0.25)!,
-            ],
+            colors: gradientColors,
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFCFB53B), width: 1.5),
-          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6))],
+          border: Border.all(color: borderColor, width: isOni ? 2.0 : 1.5),
+          boxShadow: [
+            BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6)),
+            if (isOni) BoxShadow(color: const Color(0xFFFF4500).withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 4)),
+          ],
         ),
         child: Column(children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 3),
+            style: TextStyle(
+              color: isOni ? const Color(0xFFFFD54F) : Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            style: TextStyle(color: isOni ? const Color(0xFFFFAB91) : Colors.white70, fontSize: 12),
           ),
         ]),
       ),

@@ -22,7 +22,16 @@ class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
   MahjongGame(this.controller);
 
   @override
-  Color backgroundColor() => const Color(0xFF1A3D2B);
+  Color backgroundColor() {
+    switch (controller.mode) {
+      case GameMode.easy:
+        return const Color(0xFF0D1F4A);
+      case GameMode.oni:
+        return const Color(0xFF3A0808);
+      case GameMode.normal:
+        return const Color(0xFF1A3D2B);
+    }
+  }
 
   @override
   Future<void> onLoad() async {
@@ -123,15 +132,35 @@ class _HudComponent extends Component with HasGameReference<MahjongGame> {
   @override
   void render(Canvas canvas) {
     final sw = game.size.x;
-    // Background bar
     canvas.drawRect(
       Rect.fromLTWH(0, 0, sw, BoardLayout.boardOffsetY),
       Paint()..color = const Color(0xCC1A237E),
     );
-    _drawText(canvas, 'SCORE', const Color(0x99FFFFFF), 9, Offset(14, 6));
-    _drawText(canvas, _fmt(controller.score), Colors.white, 18, Offset(14, 18));
-    _drawText(canvas, '×${controller.combo}', const Color(0xFFFFD54F), 18, Offset(sw / 2 - 20, 16));
-    _drawText(canvas, 'LV.${controller.level}', const Color(0xFF80CBC4), 14, Offset(sw - 150, 20));
+
+    // Mode label top-left
+    final (modeText, modeColor) = switch (controller.mode) {
+      GameMode.easy => ('簡単モード', const Color(0xFF64B5F6)),
+      GameMode.normal => ('通常モード', const Color(0xFF81C784)),
+      GameMode.oni => ('鬼モード', const Color(0xFFEF9A9A)),
+    };
+    _paintLeft(canvas, modeText, modeColor, 12, 14, 10);
+
+    const lc = Color(0x88FFFFFF);
+    // Lower row: score info
+    const ly = 50.0;
+    const vy = 62.0;
+
+    // Left: SCORE
+    _paintLeft(canvas, 'SCORE', lc, 9, 14, ly);
+    _paintLeft(canvas, _fmt(controller.score), Colors.white, 20, 14, vy);
+
+    // Center: COMBO
+    _paintCenter(canvas, 'COMBO', lc, 9, sw / 2, ly);
+    _paintCenter(canvas, '×${controller.combo}', const Color(0xFFFFD54F), 20, sw / 2, vy);
+
+    // Right: LEVEL (full width, no button overlap in this row)
+    _paintRight(canvas, 'LEVEL', lc, 9, sw - 14, ly);
+    _paintRight(canvas, 'LV.${controller.level}', const Color(0xFF80CBC4), 20, sw - 14, vy);
   }
 
   String _fmt(int n) {
@@ -139,12 +168,22 @@ class _HudComponent extends Component with HasGameReference<MahjongGame> {
     return '$n';
   }
 
-  void _drawText(Canvas canvas, String text, Color color, double size, Offset pos) {
-    final p = TextPainter(
-      text: TextSpan(text: text, style: TextStyle(color: color, fontSize: size, fontWeight: FontWeight.bold, height: 1.0)),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    p.paint(canvas, pos);
+  TextPainter _tp(String text, Color color, double size) => TextPainter(
+        text: TextSpan(text: text, style: TextStyle(color: color, fontSize: size, fontWeight: FontWeight.bold, height: 1.0)),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+  void _paintLeft(Canvas canvas, String text, Color color, double size, double x, double y) =>
+      _tp(text, color, size).paint(canvas, Offset(x, y));
+
+  void _paintCenter(Canvas canvas, String text, Color color, double size, double cx, double y) {
+    final p = _tp(text, color, size);
+    p.paint(canvas, Offset(cx - p.width / 2, y));
+  }
+
+  void _paintRight(Canvas canvas, String text, Color color, double size, double rx, double y) {
+    final p = _tp(text, color, size);
+    p.paint(canvas, Offset(rx - p.width, y));
   }
 }
 

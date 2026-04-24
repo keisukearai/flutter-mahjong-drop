@@ -355,16 +355,17 @@ class TilePainter {
         ? const Color(0x99FFD700)
         : _meldBorderColor(firstTile).withValues(alpha: 0.35);
 
-    // Glow shadow
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(outer.inflate(5), const Radius.circular(16)),
-      Paint()
-        ..color = glowColor
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
-    );
-
     if (group.shape == MeldShape.lShape) {
-      // Draw each cell individually so the empty corner stays clear
+      // Draw glow, bg, and border per-cell so the empty corner stays clear
+      final glowPaint = Paint()
+        ..color = glowColor
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7);
+      for (final rect in cellRects) {
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect.inflate(5), const Radius.circular(12)),
+          glowPaint,
+        );
+      }
       for (final rect in cellRects) {
         canvas.drawRRect(
           RRect.fromRectAndRadius(rect.inflate(2), const Radius.circular(10)),
@@ -379,6 +380,13 @@ class TilePainter {
         );
       }
     } else {
+      // Glow shadow over full bounding rect for linear shapes
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(outer.inflate(5), const Radius.circular(16)),
+        Paint()
+          ..color = glowColor
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+      );
       canvas.drawRRect(
         RRect.fromRectAndRadius(outer.inflate(2), const Radius.circular(14)),
         Paint()..color = bg,
@@ -396,7 +404,15 @@ class TilePainter {
       drawTile(canvas, group.meld.tiles[i], cellRects[i].deflate(gap));
     }
 
-    _drawMeldBadge(canvas, outer, group.meld.type, isWinHighlight: isWinHighlight);
+    // For L-shapes place badge on the topmost-rightmost filled cell
+    final badgeAnchor = group.shape == MeldShape.lShape
+        ? cellRects.reduce((best, r) {
+            if (r.top < best.top) return r;
+            if (r.top == best.top && r.right > best.right) return r;
+            return best;
+          })
+        : outer;
+    _drawMeldBadge(canvas, badgeAnchor, group.meld.type, isWinHighlight: isWinHighlight);
   }
 
   static Color _meldBgColor(Tile tile) {

@@ -14,6 +14,13 @@ class BoardComponent extends Component with HasGameReference {
   @override
   void render(Canvas canvas) {
     final sw = game.size.x;
+    final totalW = BoardLayout.cols * BoardLayout.tileW + (BoardLayout.cols - 1) * BoardLayout.gap;
+    final startX = (sw - totalW) / 2;
+    final boardH = BoardLayout.rows * BoardLayout.tileH + (BoardLayout.rows - 1) * BoardLayout.gap;
+    canvas.drawRect(
+      Rect.fromLTWH(startX, BoardLayout.boardOffsetY, totalW, boardH),
+      Paint()..color = const Color(0xFF1A3D2B),
+    );
     _drawEmptyCells(canvas, sw);
     _drawMeldBlocks(canvas, sw);
     _drawIndividualTiles(canvas, sw);

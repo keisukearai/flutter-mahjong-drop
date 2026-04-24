@@ -78,7 +78,7 @@ class BoardLayout {
   static const double tileW = 46.0;
   static const double tileH = 58.0;
   static const double gap = 3.0;
-  static const double boardOffsetY = 54.0;
+  static const double boardOffsetY = 90.0;
 
   static double colX(int col, double screenW) {
     final totalW = cols * tileW + (cols - 1) * gap;

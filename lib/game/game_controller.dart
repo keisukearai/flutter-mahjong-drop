@@ -7,7 +7,7 @@ import 'win_detector.dart';
 
 enum GameStatus { playing, winAnimation, gameOver }
 
-enum GameMode { sanma, easy }
+enum GameMode { easy, normal, oni }
 
 class GameEvent {
   final List<MeldGroup> newMelds;
@@ -19,7 +19,6 @@ class GameController extends ChangeNotifier {
   static const int numCols = BoardState.cols;
 
   final _random = Random();
-  List<Tile> _bag = [];
 
   final BoardState board = BoardState();
 
@@ -41,7 +40,7 @@ class GameController extends ChangeNotifier {
   WinResult? pendingWin;
   WinScore? pendingScore;
 
-  GameController({this.mode = GameMode.sanma}) {
+  GameController({this.mode = GameMode.normal}) {
     _init();
   }
 
@@ -52,7 +51,6 @@ class GameController extends ChangeNotifier {
         board.cells[r][c] = const EmptyCell();
       }
     }
-    _bag = _buildBag()..shuffle(_random);
     score = 0;
     combo = 0;
     level = 1;
@@ -65,33 +63,45 @@ class GameController extends ChangeNotifier {
     _spawnNext();
   }
 
-  List<Tile> _buildBag() {
-    final bag = <Tile>[];
+  // easy:   字牌のみ
+  // normal: 萬子1/9・筒子全部・索子1/9・字牌（索子2-8なし・フェーズなし）
+  // oni:    スコアフェーズ解放で全牌（旧sanmaモード）
+  //   Phase 1 (score <  5000): man 1/9, pin 1-3/7-9, honors  — no sou
+  //   Phase 2 (score < 15000): + pin 4-6, sou 1-3/7-9
+  //   Phase 3 (score >= 15000): + sou 4-6 (full sou)
+  Tile _pickTile() {
     if (mode == GameMode.easy) {
-      // 字牌のみ: 東南西北白發中
-      for (final h in HonorType.values) {
-        for (int i = 0; i < 4; i++) { bag.add(Tile.honor(h)); }
-      }
-    } else {
-      // 三人麻雀: 萬子は1と9のみ、筒子・索子は1〜9、字牌あり
-      for (int n in [1, 9]) {
-        for (int i = 0; i < 4; i++) { bag.add(Tile.number(TileSuit.man, n)); }
-      }
-      for (final suit in [TileSuit.pin, TileSuit.sou]) {
-        for (int n = 1; n <= 9; n++) {
-          for (int i = 0; i < 4; i++) { bag.add(Tile.number(suit, n)); }
-        }
-      }
-      for (final h in HonorType.values) {
-        for (int i = 0; i < 4; i++) { bag.add(Tile.honor(h)); }
-      }
+      final h = HonorType.values[_random.nextInt(HonorType.values.length)];
+      return Tile.honor(h);
     }
-    return bag;
+
+    if (mode == GameMode.normal) {
+      final pool = <Tile>[];
+      for (final n in [1, 9]) { pool.add(Tile.number(TileSuit.man, n)); }
+      for (int n = 1; n <= 9; n++) { pool.add(Tile.number(TileSuit.pin, n)); }
+      for (final n in [1, 9]) { pool.add(Tile.number(TileSuit.sou, n)); }
+      for (final h in HonorType.values) { pool.add(Tile.honor(h)); }
+      return pool[_random.nextInt(pool.length)];
+    }
+
+    // oni: phase-based full tile set
+    final pool = <Tile>[];
+    for (final n in [1, 9]) { pool.add(Tile.number(TileSuit.man, n)); }
+    for (final n in [1, 2, 3, 7, 8, 9]) { pool.add(Tile.number(TileSuit.pin, n)); }
+    if (score >= 5000) {
+      for (final n in [4, 5, 6]) { pool.add(Tile.number(TileSuit.pin, n)); }
+      for (final n in [1, 2, 3, 7, 8, 9]) { pool.add(Tile.number(TileSuit.sou, n)); }
+    }
+    if (score >= 15000) {
+      for (final n in [4, 5, 6]) { pool.add(Tile.number(TileSuit.sou, n)); }
+    }
+    for (final h in HonorType.values) { pool.add(Tile.honor(h)); }
+
+    return pool[_random.nextInt(pool.length)];
   }
 
   void _spawnNext() {
-    if (_bag.isEmpty) _bag = _buildBag()..shuffle(_random);
-    fallingTile = _bag.removeLast();
+    fallingTile = _pickTile();
     fallingCol = numCols ~/ 2;
     notifyListeners();
   }

@@ -7,7 +7,7 @@ import 'game_over_overlay.dart';
 
 class GameScreen extends StatefulWidget {
   final GameMode mode;
-  const GameScreen({super.key, this.mode = GameMode.sanma});
+  const GameScreen({super.key, this.mode = GameMode.normal});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
