@@ -1,9 +1,13 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../game/game_controller.dart';
 import '../game/components/tile_painter.dart';
 import '../mahjong/tile.dart';
+import '../purchase/purchase_service.dart';
 import 'game_screen.dart';
+import 'paywall_screen.dart';
 import 'score_history_screen.dart';
 
 class TitleScreen extends StatelessWidget {
@@ -61,17 +65,7 @@ class TitleScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _ModeButton(
-                      label: '鬼 モ ー ド',
-                      subtitle: '全牌登場',
-                      color: const Color(0xFF7A1010),
-                      isOni: true,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const GameScreen(mode: GameMode.oni),
-                        ),
-                      ),
-                    ),
+                    _OniModeButton(),
                     const SizedBox(height: 20),
                     _HistoryButton(
                       onTap: () => Navigator.of(context).push(
@@ -83,6 +77,7 @@ class TitleScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              if (kDebugMode) const _DebugPremiumToggle(),
               const Spacer(flex: 3),
             ],
           ),
@@ -247,62 +242,142 @@ class _HistoryButton extends StatelessWidget {
   }
 }
 
+class _OniModeButton extends StatelessWidget {
+  const _OniModeButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.watch<PurchaseService>();
+    final unlocked = service.isPremium;
+
+    return _ModeButton(
+      label: '鬼 モ ー ド',
+      subtitle: unlocked ? '全牌登場' : '全牌登場  🔒',
+      color: const Color(0xFF7A1010),
+      isOni: true,
+      locked: !unlocked,
+      onTap: () async {
+        if (!unlocked) {
+          final result = await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => ChangeNotifierProvider.value(
+              value: service,
+              child: const PaywallScreen(),
+            ),
+          );
+          if (result == true && context.mounted) {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const GameScreen(mode: GameMode.oni)),
+            );
+          }
+          return;
+        }
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const GameScreen(mode: GameMode.oni)),
+        );
+      },
+    );
+  }
+}
+
 class _ModeButton extends StatelessWidget {
   final String label;
   final String subtitle;
   final Color color;
   final VoidCallback onTap;
   final bool isOni;
-  const _ModeButton({required this.label, required this.subtitle, required this.color, required this.onTap, this.isOni = false});
+  final bool locked;
+  const _ModeButton({required this.label, required this.subtitle, required this.color, required this.onTap, this.isOni = false, this.locked = false});
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isOni ? const Color(0xFFFF6B35) : const Color(0xFFCFB53B);
-    final gradientColors = isOni
-        ? [const Color(0xFFBF3030), const Color(0xFF4A0A0A)]
-        : [Color.lerp(color, Colors.white, 0.10)!, Color.lerp(color, Colors.black, 0.25)!];
+    final borderColor = locked
+        ? Colors.white24
+        : isOni ? const Color(0xFFFF6B35) : const Color(0xFFCFB53B);
+    final gradientColors = locked
+        ? [const Color(0xFF2A2A2A), const Color(0xFF1A1A1A)]
+        : isOni
+            ? [const Color(0xFFBF3030), const Color(0xFF4A0A0A)]
+            : [Color.lerp(color, Colors.white, 0.10)!, Color.lerp(color, Colors.black, 0.25)!];
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor, width: isOni ? 2.0 : 1.5),
-          boxShadow: [
-            BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6)),
-            if (isOni) BoxShadow(color: const Color(0xFFFF4500).withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(13),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: gradientColors,
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+      child: Opacity(
+        opacity: locked ? 0.6 : 1.0,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: borderColor, width: isOni ? 2.0 : 1.5),
+            boxShadow: [
+              BoxShadow(color: color.withValues(alpha: 0.45), blurRadius: 16, offset: const Offset(0, 6)),
+              if (isOni && !locked) BoxShadow(color: const Color(0xFFFF4500).withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 4)),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(13),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: gradientColors,
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
+              child: Column(children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: locked ? Colors.white38 : isOni ? const Color(0xFFFFD54F) : Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: locked ? Colors.white24 : isOni ? const Color(0xFFFFAB91) : Colors.white70, fontSize: 12),
+                ),
+              ]),
             ),
-            child: Column(children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isOni ? const Color(0xFFFFD54F) : Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 3,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(color: isOni ? const Color(0xFFFFAB91) : Colors.white70, fontSize: 12),
-          ),
-        ]),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DebugPremiumToggle extends StatelessWidget {
+  const _DebugPremiumToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    final service = context.watch<PurchaseService>();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            '[DEBUG] 課金済み',
+            style: TextStyle(color: Colors.white38, fontSize: 11),
+          ),
+          const SizedBox(width: 8),
+          Transform.scale(
+            scale: 0.8,
+            child: Switch(
+              value: service.isTestMode,
+              onChanged: (val) => service.isTestMode = val,
+              activeColor: const Color(0xFFFF6B35),
+              inactiveThumbColor: Colors.white30,
+              inactiveTrackColor: Colors.white12,
+            ),
+          ),
+        ],
       ),
     );
   }

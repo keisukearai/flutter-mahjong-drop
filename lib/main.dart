@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'purchase/purchase_service.dart';
 import 'ui/title_screen.dart';
 
 void main() {
@@ -13,17 +15,20 @@ class MahjongDropApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '麻雀ドロップ',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1A3D2B),
-          brightness: Brightness.dark,
+    return ChangeNotifierProvider(
+      create: (_) => PurchaseService(),
+      child: MaterialApp(
+        title: '麻雀ドロップ',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF1A3D2B),
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
+        home: const TitleScreen(),
       ),
-      home: const TitleScreen(),
     );
   }
 }
