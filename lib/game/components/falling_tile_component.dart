@@ -75,7 +75,10 @@ class BoardLayout {
   static double tileW = 46.0;
   static double tileH = 58.0;
   static const double gap = 3.0;
-  static const double boardOffsetY = 90.0;
+  static const double hudHeight = 90.0;
+  static const double nextStripY = 90.0;
+  static const double nextStripHeight = 40.0;
+  static const double boardOffsetY = 130.0;
   static const int _cols = 7;
   static const int _rows = 11;
 

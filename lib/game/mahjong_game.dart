@@ -8,6 +8,7 @@ import '../mahjong/tile.dart';
 import 'game_controller.dart';
 import 'components/board_component.dart';
 import 'components/falling_tile_component.dart';
+import 'components/tile_painter.dart';
 
 class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
   final GameController controller;
@@ -134,9 +135,10 @@ class _HudComponent extends Component with HasGameReference<MahjongGame> {
   void render(Canvas canvas) {
     final sw = game.size.x;
     canvas.drawRect(
-      Rect.fromLTWH(0, 0, sw, BoardLayout.boardOffsetY),
+      Rect.fromLTWH(0, 0, sw, BoardLayout.hudHeight),
       Paint()..color = const Color(0xCC1A237E),
     );
+    _drawNextStrip(canvas, sw);
 
     // Mode label top-left
     final (modeText, modeColor) = switch (controller.mode) {
@@ -185,6 +187,33 @@ class _HudComponent extends Component with HasGameReference<MahjongGame> {
   void _paintRight(Canvas canvas, String text, Color color, double size, double rx, double y) {
     final p = _tp(text, color, size);
     p.paint(canvas, Offset(rx - p.width, y));
+  }
+
+  void _drawNextStrip(Canvas canvas, double sw) {
+    const stripY = BoardLayout.nextStripY;
+    const stripH = BoardLayout.nextStripHeight;
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, stripY, sw, stripH),
+      Paint()..color = const Color(0xAA000000),
+    );
+
+    const miniW = 24.0;
+    const miniH = 30.0;
+    const miniGap = 4.0;
+    const totalW = 3 * miniW + 2 * miniGap;
+    final tileY = stripY + (stripH - miniH) / 2;
+
+    // "NEXT" label, vertically centered in strip
+    _paintLeft(canvas, 'NEXT', const Color(0x88FFFFFF), 9, 14, stripY + (stripH - 9) / 2);
+
+    // 3 mini tiles, centered on screen
+    final startX = (sw - totalW) / 2;
+    final tiles = controller.nextTiles;
+    for (int i = 0; i < tiles.length; i++) {
+      final rect = Rect.fromLTWH(startX + i * (miniW + miniGap), tileY, miniW, miniH);
+      TilePainter.drawTile(canvas, tiles[i], rect);
+    }
   }
 }
 

@@ -35,6 +35,8 @@ class GameController extends ChangeNotifier {
 
   final GameMode mode;
 
+  List<Tile> nextTiles = [];
+
   // Last event for animations
   GameEvent lastEvent = const GameEvent();
   WinResult? pendingWin;
@@ -60,6 +62,7 @@ class GameController extends ChangeNotifier {
     pendingWin = null;
     pendingScore = null;
     completedYaku = [];
+    nextTiles = List.generate(3, (_) => _pickTile());
     _spawnNext();
   }
 
@@ -101,7 +104,8 @@ class GameController extends ChangeNotifier {
   }
 
   void _spawnNext() {
-    fallingTile = _pickTile();
+    fallingTile = nextTiles.removeAt(0);
+    nextTiles.add(_pickTile());
     fallingCol = numCols ~/ 2;
     notifyListeners();
   }
