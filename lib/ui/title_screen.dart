@@ -4,6 +4,7 @@ import '../game/game_controller.dart';
 import '../game/components/tile_painter.dart';
 import '../mahjong/tile.dart';
 import 'game_screen.dart';
+import 'score_history_screen.dart';
 
 class TitleScreen extends StatelessWidget {
   const TitleScreen({super.key});
@@ -68,6 +69,14 @@ class TitleScreen extends StatelessWidget {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const GameScreen(mode: GameMode.oni),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    _HistoryButton(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ScoreHistoryScreen(),
                         ),
                       ),
                     ),
@@ -206,6 +215,38 @@ class _MeldArrow extends StatelessWidget {
   }
 }
 
+class _HistoryButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _HistoryButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white24, width: 1.2),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.emoji_events_outlined, color: Color(0xFFCFB53B), size: 18),
+            SizedBox(width: 8),
+            Text(
+              'ハイスコア',
+              style: TextStyle(color: Colors.white70, fontSize: 15, letterSpacing: 1),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ModeButton extends StatelessWidget {
   final String label;
   final String subtitle;
@@ -224,14 +265,7 @@ class _ModeButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: borderColor, width: isOni ? 2.0 : 1.5),
           boxShadow: [
@@ -239,7 +273,19 @@ class _ModeButton extends StatelessWidget {
             if (isOni) BoxShadow(color: const Color(0xFFFF4500).withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 4)),
           ],
         ),
-        child: Column(children: [
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(13),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: gradientColors,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Column(children: [
           Text(
             label,
             style: TextStyle(
@@ -255,6 +301,8 @@ class _ModeButton extends StatelessWidget {
             style: TextStyle(color: isOni ? const Color(0xFFFFAB91) : Colors.white70, fontSize: 12),
           ),
         ]),
+          ),
+        ),
       ),
     );
   }

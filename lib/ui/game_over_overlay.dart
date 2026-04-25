@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
 import '../game/game_controller.dart';
+import '../game/score_repository.dart';
 
-class GameOverOverlay extends StatelessWidget {
+class GameOverOverlay extends StatefulWidget {
   final GameController controller;
   const GameOverOverlay({super.key, required this.controller});
 
   @override
+  State<GameOverOverlay> createState() => _GameOverOverlayState();
+}
+
+class _GameOverOverlayState extends State<GameOverOverlay> {
+  @override
+  void initState() {
+    super.initState();
+    ScoreRepository.save(widget.controller.score, widget.controller.mode);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final controller = widget.controller;
     return Container(
       color: Colors.black87,
       child: Center(
