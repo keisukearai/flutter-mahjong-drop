@@ -6,7 +6,6 @@ import '../../mahjong/meld.dart';
 import '../board_state.dart';
 
 class TilePainter {
-  static const double radius = 11.0;
   static const Color _cream = Color(0xFFFFF9E6);
   static const Color _creamShadow = Color(0xFFA09060);
 
@@ -21,7 +20,8 @@ class TilePainter {
     double opacity = 1.0,
     bool isFalling = false,
   }) {
-    final rr = RRect.fromRectAndRadius(rect, const Radius.circular(radius));
+    final r = rect.width * 0.24;
+    final rr = RRect.fromRectAndRadius(rect, Radius.circular(r));
 
     if (isFalling) {
       canvas.drawRRect(
@@ -35,7 +35,7 @@ class TilePainter {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           rect.shift(const Offset(0, 2.5)).inflate(0.5),
-          const Radius.circular(radius),
+          Radius.circular(r),
         ),
         Paint()..color = Color.fromARGB((90 * opacity).round(), 120, 90, 20),
       );

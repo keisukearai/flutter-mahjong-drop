@@ -36,6 +36,7 @@ class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    BoardLayout.init(size.x, size.y);
     _board = BoardComponent(board: controller.board);
     add(_board);
     add(_HudComponent(controller: controller));
