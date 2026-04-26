@@ -11,8 +11,8 @@ class PurchaseService extends ChangeNotifier {
   bool _isPremium = false;
   bool get isPremium => _isPremium || _isTestMode;
 
-  // DEBUGビルドはデフォルトで解放済み扱い（実機テスト用）
-  bool _isTestMode = kDebugMode;
+  // 常に解放済み扱い
+  bool _isTestMode = true;
   bool get isTestMode => _isTestMode;
   set isTestMode(bool val) {
     _isTestMode = val;

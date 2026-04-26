@@ -27,8 +27,7 @@ class TilePainter {
       canvas.drawRRect(
         rr.shift(const Offset(0, 8)),
         Paint()
-          ..color = Color.fromARGB((100 * opacity).round(), 0, 0, 0)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+          ..color = Color.fromARGB((60 * opacity).round(), 0, 0, 0),
       );
     } else {
       // 3-D relief: darker bottom edge
@@ -358,8 +357,7 @@ class TilePainter {
     if (group.shape == MeldShape.lShape) {
       // Draw glow, bg, and border per-cell so the empty corner stays clear
       final glowPaint = Paint()
-        ..color = glowColor
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7);
+        ..color = glowColor;
       for (final rect in cellRects) {
         canvas.drawRRect(
           RRect.fromRectAndRadius(rect.inflate(5), const Radius.circular(12)),
@@ -383,9 +381,7 @@ class TilePainter {
       // Glow shadow over full bounding rect for linear shapes
       canvas.drawRRect(
         RRect.fromRectAndRadius(outer.inflate(5), const Radius.circular(16)),
-        Paint()
-          ..color = glowColor
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7),
+        Paint()..color = glowColor,
       );
       canvas.drawRRect(
         RRect.fromRectAndRadius(outer.inflate(2), const Radius.circular(14)),
@@ -440,8 +436,6 @@ class TilePainter {
         ? const Color(0xFFFFD700)
         : (type == MeldType.triplet ? const Color(0xFFE53935) : const Color(0xFF1E88E5));
     final center = Offset(outer.right - 7, outer.top + 7);
-    canvas.drawCircle(center, 6,
-        Paint()..color = badgeColor..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
     canvas.drawCircle(center, 6, Paint()..color = badgeColor);
     canvas.drawCircle(center, 6,
         Paint()..color = Colors.white..style = PaintingStyle.stroke..strokeWidth = 1.5);
