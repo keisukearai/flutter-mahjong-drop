@@ -91,20 +91,32 @@ class WinDetector {
     }
   }
 
-  /// Returns true when the board is one tile away from a win (tenpai).
-  /// Checks only the case where 4+ melds are formed and one more matching
-  /// individual tile would complete the pair.
+  /// Returns true when the board is in tenpai:
+  /// - 4+ melds formed, one individual tile needs a match to complete the pair, or
+  /// - 3 melds formed and a pair already exists (waiting for 4th meld).
   static bool isTenpai(BoardState board) {
     if (detect(board) != null) return false;
 
     final melds = board.meldGroups;
-    if (melds.length < 4) return false;
-
     final individuals = _collectIndividualTilePositions(board);
-    for (final entry in individuals.entries) {
-      if (entry.value.isEmpty) continue;
-      if (_selectValidMelds(melds, entry.key) != null) return true;
+
+    if (melds.length >= 4) {
+      for (final entry in individuals.entries) {
+        if (entry.value.isEmpty) continue;
+        if (_selectValidMelds(melds, entry.key) != null) return true;
+      }
+      return false;
     }
+
+    if (melds.length >= 3) {
+      for (final entry in individuals.entries) {
+        if (entry.value.length < 2) continue;
+        for (final combo in _combinations(melds, 3)) {
+          if (_isValidHand(combo, entry.key)) return true;
+        }
+      }
+    }
+
     return false;
   }
 
