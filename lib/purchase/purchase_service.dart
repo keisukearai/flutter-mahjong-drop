@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 class PurchaseService extends ChangeNotifier {
-  static const productId = 'com.keisukearai.mahjong-drop.premium';
+  static const productId = 'com.keisukearai.mahjong_drop.premium';
 
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
@@ -11,8 +11,7 @@ class PurchaseService extends ChangeNotifier {
   bool _isPremium = false;
   bool get isPremium => _isPremium || _isTestMode;
 
-  // 常に解放済み扱い
-  bool _isTestMode = true;
+  bool _isTestMode = false;
   bool get isTestMode => _isTestMode;
   set isTestMode(bool val) {
     _isTestMode = val;
