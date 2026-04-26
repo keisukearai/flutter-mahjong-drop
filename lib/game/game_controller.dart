@@ -37,6 +37,8 @@ class GameController extends ChangeNotifier {
 
   List<Tile> nextTiles = [];
 
+  bool isTenpai = false;
+
   // Last event for animations
   GameEvent lastEvent = const GameEvent();
   WinResult? pendingWin;
@@ -58,6 +60,7 @@ class GameController extends ChangeNotifier {
     level = 1;
     status = GameStatus.playing;
     isPaused = false;
+    isTenpai = false;
     lastEvent = const GameEvent();
     pendingWin = null;
     pendingScore = null;
@@ -173,12 +176,14 @@ class GameController extends ChangeNotifier {
     lastEvent = GameEvent(newMelds: newMelds, win: win);
 
     if (win != null) {
+      isTenpai = false;
       pendingWin = win;
       pendingScore = WinDetector.computeScore(win);
       status = GameStatus.winAnimation;
       notifyListeners();
       // 次の牌は confirmWin() 後に spawn
     } else {
+      isTenpai = WinDetector.isTenpai(board);
       notifyListeners();
       _spawnNext();
     }
@@ -212,6 +217,7 @@ class GameController extends ChangeNotifier {
 
     pendingWin = null;
     pendingScore = null;
+    isTenpai = false;
     status = GameStatus.playing;
     _spawnNext();
   }

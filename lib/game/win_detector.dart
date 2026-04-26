@@ -91,6 +91,23 @@ class WinDetector {
     }
   }
 
+  /// Returns true when the board is one tile away from a win (tenpai).
+  /// Checks only the case where 4+ melds are formed and one more matching
+  /// individual tile would complete the pair.
+  static bool isTenpai(BoardState board) {
+    if (detect(board) != null) return false;
+
+    final melds = board.meldGroups;
+    if (melds.length < 4) return false;
+
+    final individuals = _collectIndividualTilePositions(board);
+    for (final entry in individuals.entries) {
+      if (entry.value.isEmpty) continue;
+      if (_selectValidMelds(melds, entry.key) != null) return true;
+    }
+    return false;
+  }
+
   static Map<Tile, List<(int, int)>> _collectIndividualTilePositions(BoardState board) {
     final map = <Tile, List<(int, int)>>{};
     for (int r = 0; r < BoardState.rows; r++) {

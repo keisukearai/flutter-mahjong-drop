@@ -90,11 +90,76 @@ class _GameScreenState extends State<GameScreen> {
               right: 8,
               child: _HomeButton(onTap: () => _confirmBack(context)),
             ),
+            if (_ctrl.isTenpai && _ctrl.status == GameStatus.playing && !_ctrl.isPaused)
+              const _TenpaiBanner(),
             if (_ctrl.status == GameStatus.winAnimation)
               WinOverlay(controller: _ctrl),
             if (_ctrl.status == GameStatus.gameOver)
               GameOverOverlay(controller: _ctrl),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TenpaiBanner extends StatefulWidget {
+  const _TenpaiBanner();
+
+  @override
+  State<_TenpaiBanner> createState() => _TenpaiBannerState();
+}
+
+class _TenpaiBannerState extends State<_TenpaiBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _anim;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat(reverse: true);
+    _opacity = Tween<double>(begin: 0.6, end: 1.0).animate(_anim);
+  }
+
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      bottom: 16,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: FadeTransition(
+          opacity: _opacity,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xCCB71C1C),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFFF6B6B), width: 1.5),
+              boxShadow: const [
+                BoxShadow(color: Color(0x99FF0000), blurRadius: 12, spreadRadius: 2),
+              ],
+            ),
+            child: const Text(
+              'テンパイ！',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 3,
+              ),
+            ),
+          ),
         ),
       ),
     );
