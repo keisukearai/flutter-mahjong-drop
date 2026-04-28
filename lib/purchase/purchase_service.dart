@@ -25,33 +25,47 @@ class PurchaseService extends ChangeNotifier {
   bool get isPurchasing => _isPurchasing;
 
   PurchaseService() {
-    _subscription = _iap.purchaseStream.listen(_onPurchaseUpdate);
+    _subscription = _iap.purchaseStream.listen(
+      _onPurchaseUpdate,
+      onError: (_) {},
+    );
     _init();
   }
 
   Future<void> _init() async {
-    await _checkCurrentEntitlements();
-    await loadProduct();
+    try {
+      await _checkCurrentEntitlements();
+      await loadProduct();
+    } catch (_) {}
   }
 
   Future<void> loadProduct() async {
-    final response = await _iap.queryProductDetails({productId});
-    if (response.productDetails.isNotEmpty) {
-      _product = response.productDetails.first;
-      notifyListeners();
-    }
+    try {
+      final response = await _iap.queryProductDetails({productId});
+      if (response.productDetails.isNotEmpty) {
+        _product = response.productDetails.first;
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   Future<void> purchase() async {
     if (_product == null) return;
     _isPurchasing = true;
     notifyListeners();
-    final param = PurchaseParam(productDetails: _product!);
-    await _iap.buyNonConsumable(purchaseParam: param);
+    try {
+      final param = PurchaseParam(productDetails: _product!);
+      await _iap.buyNonConsumable(purchaseParam: param);
+    } catch (_) {
+      _isPurchasing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> restore() async {
-    await _iap.restorePurchases();
+    try {
+      await _iap.restorePurchases();
+    } catch (_) {}
   }
 
   void _onPurchaseUpdate(List<PurchaseDetails> purchases) {
@@ -67,7 +81,7 @@ class PurchaseService extends ChangeNotifier {
           notifyListeners();
         }
         if (purchase.pendingCompletePurchase) {
-          _iap.completePurchase(purchase);
+          _iap.completePurchase(purchase).catchError((_) {});
         }
       }
       if (purchase.status != PurchaseStatus.pending) {
@@ -78,9 +92,9 @@ class PurchaseService extends ChangeNotifier {
   }
 
   Future<void> _checkCurrentEntitlements() async {
-    // iOS: restorePurchases で既存購入を確認
-    // purchaseStream 経由で restored イベントが流れてくる
-    await _iap.restorePurchases();
+    try {
+      await _iap.restorePurchases();
+    } catch (_) {}
   }
 
   @override

@@ -372,7 +372,7 @@ class _DebugPremiumToggle extends StatelessWidget {
             child: Switch(
               value: service.isTestMode,
               onChanged: (val) => service.isTestMode = val,
-              activeColor: const Color(0xFFFF6B35),
+              activeThumbColor: const Color(0xFFFF6B35),
               inactiveThumbColor: Colors.white30,
               inactiveTrackColor: Colors.white12,
             ),

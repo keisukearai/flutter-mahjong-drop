@@ -21,23 +21,29 @@ class SfxService {
   }
 
   Future<void> playGameOver() async {
-    _gameOverPlayer = AudioPlayer();
-    await _gameOverPlayer!.setReleaseMode(ReleaseMode.loop);
-    await _gameOverPlayer!.setVolume(0.9);
-    await _gameOverPlayer!.play(AssetSource('audio/sfx_gameover.wav'));
+    try {
+      _gameOverPlayer = AudioPlayer();
+      await _gameOverPlayer!.setReleaseMode(ReleaseMode.loop);
+      await _gameOverPlayer!.setVolume(0.9);
+      await _gameOverPlayer!.play(AssetSource('audio/sfx_gameover.wav'));
+    } catch (_) {}
   }
 
   Future<void> stopGameOver() async {
-    await _gameOverPlayer?.stop();
-    await _gameOverPlayer?.dispose();
+    try {
+      await _gameOverPlayer?.stop();
+      await _gameOverPlayer?.dispose();
+    } catch (_) {}
     _gameOverPlayer = null;
   }
 
   Future<void> _playOnce(String asset) async {
-    final player = AudioPlayer();
-    await player.setReleaseMode(ReleaseMode.release);
-    await player.setVolume(0.9);
-    await player.play(AssetSource(asset));
-    player.onPlayerComplete.listen((_) => player.dispose());
+    try {
+      final player = AudioPlayer();
+      await player.setReleaseMode(ReleaseMode.release);
+      await player.setVolume(0.9);
+      await player.play(AssetSource(asset));
+      player.onPlayerComplete.listen((_) => player.dispose());
+    } catch (_) {}
   }
 }

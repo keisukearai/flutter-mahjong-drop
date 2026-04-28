@@ -21,20 +21,33 @@ class BgmService {
     _currentMode = mode;
     _currentRate = 1.0;
     _lastMinFree = 99;
-    await _player.setLoopMode(LoopMode.one);
-    await _player.setVolume(0.5);
-    await _player.setAsset(_assetFor(mode));
-    await _player.setSpeed(1.0);
-    await _player.play();
+    try {
+      await _player.setLoopMode(LoopMode.one);
+      await _player.setVolume(0.5);
+      await _player.setAsset(_assetFor(mode));
+      await _player.setSpeed(1.0);
+      await _player.play();
+    } catch (_) {}
   }
 
   Future<void> stop() async {
     _currentMode = null;
-    await _player.stop();
+    try {
+      await _player.stop();
+    } catch (_) {}
   }
 
-  Future<void> pause() async => _player.pause();
-  Future<void> resume() async => _player.play();
+  Future<void> pause() async {
+    try {
+      await _player.pause();
+    } catch (_) {}
+  }
+
+  Future<void> resume() async {
+    try {
+      await _player.play();
+    } catch (_) {}
+  }
 
   // minFree: 0(限界)〜10(余裕) → rate: 1.5x〜1.0x
   // 変化が小さい場合や同値の場合はスキップしてスタッター防止
@@ -49,6 +62,8 @@ class BgmService {
 
     if ((targetRate - _currentRate).abs() < 0.03) return;
     _currentRate = targetRate;
-    await _player.setSpeed(targetRate);
+    try {
+      await _player.setSpeed(targetRate);
+    } catch (_) {}
   }
 }
