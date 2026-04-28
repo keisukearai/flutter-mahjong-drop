@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import '../game/game_controller.dart';
 import '../game/mahjong_game.dart';
+import '../services/bgm_service.dart';
+import '../services/sfx_service.dart';
 import 'win_overlay.dart';
 import 'game_over_overlay.dart';
 
@@ -22,17 +24,63 @@ class _GameScreenState extends State<GameScreen> {
     super.initState();
     _ctrl = GameController(mode: widget.mode);
     _game = MahjongGame(_ctrl);
-    _ctrl.addListener(_rebuild);
+    _ctrl.addListener(_onControllerChange);
+    BgmService.instance.play(widget.mode);
   }
 
   @override
   void dispose() {
-    _ctrl.removeListener(_rebuild);
+    _ctrl.removeListener(_onControllerChange);
     _ctrl.dispose();
+    BgmService.instance.stop();
+    SfxService.instance.stopGameOver();
     super.dispose();
   }
 
-  void _rebuild() => setState(() {});
+  bool _wasPaused = false;
+  bool _wasTenpai = false;
+  GameStatus _prevStatus = GameStatus.playing;
+
+  void _onControllerChange() {
+    final status = _ctrl.status;
+
+    if (status == GameStatus.gameOver || status == GameStatus.winAnimation) {
+      BgmService.instance.stop();
+    } else if (status == GameStatus.playing) {
+      if (_prevStatus == GameStatus.gameOver || _prevStatus == GameStatus.winAnimation) {
+        // もう一度 → ループSE停止 & BGM再開
+        SfxService.instance.stopGameOver();
+        _wasTenpai = false;
+        BgmService.instance.play(widget.mode);
+      } else {
+        // メンツ完成SE
+        if (_ctrl.lastEvent.newMelds.isNotEmpty) {
+          SfxService.instance.playMeld();
+        }
+        // テンパイSE（false→true のタイミングだけ）
+        if (_ctrl.isTenpai && !_wasTenpai) {
+          SfxService.instance.playTenpai();
+        }
+        _wasTenpai = _ctrl.isTenpai;
+
+        // 積み上がり具合でBGM速度を変える
+        BgmService.instance.updateDanger(_ctrl.minFreeRows);
+
+        final paused = _ctrl.isPaused;
+        if (paused != _wasPaused) {
+          _wasPaused = paused;
+          if (paused) {
+            BgmService.instance.pause();
+          } else {
+            BgmService.instance.resume();
+          }
+        }
+      }
+    }
+
+    _prevStatus = status;
+    setState(() {});
+  }
 
   Future<void> _confirmBack(BuildContext context) async {
     final yes = await showDialog<bool>(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../game/game_controller.dart';
 import '../mahjong/tile.dart';
 import '../game/components/tile_painter.dart';
+import '../services/sfx_service.dart';
 
 class WinOverlay extends StatefulWidget {
   final GameController controller;
@@ -21,6 +22,7 @@ class _WinOverlayState extends State<WinOverlay> with SingleTickerProviderStateM
     _anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 350));
     _scale = CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic);
     _anim.forward();
+    SfxService.instance.playWin();
   }
 
   @override

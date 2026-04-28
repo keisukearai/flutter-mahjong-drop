@@ -113,16 +113,21 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  double get fallSpeed {
-    final baseSpeed = (160.0 + level * 20.0).clamp(0.0, 500.0);
-
-    // Find the minimum free rows across all columns (most crowded column)
+  int get minFreeRows {
     int minFree = BoardState.rows - 1;
     for (int c = 0; c < BoardState.cols; c++) {
       final lr = board.landingRow(c);
       final free = lr < 0 ? 0 : lr;
       if (free < minFree) minFree = free;
     }
+    return minFree;
+  }
+
+  double get fallSpeed {
+    final baseSpeed = (160.0 + level * 20.0).clamp(0.0, 500.0);
+
+    // Find the minimum free rows across all columns (most crowded column)
+    final minFree = minFreeRows;
 
     // No change when board is mostly empty (minFree >= 8).
     // Linear slowdown to 30% as the tallest stack approaches the top.
@@ -146,6 +151,7 @@ class GameController extends ChangeNotifier {
   void moveLeft() {
     if (fallingCol > 0 && isPlaying) {
       fallingCol--;
+      lastEvent = const GameEvent();
       notifyListeners();
     }
   }
@@ -153,6 +159,7 @@ class GameController extends ChangeNotifier {
   void moveRight() {
     if (fallingCol < numCols - 1 && isPlaying) {
       fallingCol++;
+      lastEvent = const GameEvent();
       notifyListeners();
     }
   }

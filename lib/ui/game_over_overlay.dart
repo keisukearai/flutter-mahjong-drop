@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../game/game_controller.dart';
 import '../game/score_repository.dart';
+import '../services/sfx_service.dart';
 
 class GameOverOverlay extends StatefulWidget {
   final GameController controller;
@@ -15,6 +16,7 @@ class _GameOverOverlayState extends State<GameOverOverlay> {
   void initState() {
     super.initState();
     ScoreRepository.save(widget.controller.score, widget.controller.mode);
+    SfxService.instance.playGameOver();
   }
 
   @override
