@@ -7,6 +7,40 @@
 
 ---
 
+## サウンド
+
+### BGM
+
+モードごとに専用の BGM がループ再生される。
+
+| モード | ファイル | 雰囲気 |
+|---|---|---|
+| 簡単 | `assets/audio/bgm_easy.wav` | Cペンタトニック、穏やか、90BPM |
+| 通常 | `assets/audio/bgm_normal.wav` | 日本ヨ音階、110BPM |
+| 鬼 | `assets/audio/bgm_oni.wav` | ダークマイナー、135BPM |
+
+- 牌が積み上がるほどBGMテンポが上昇（最大1.5倍速）
+- ポーズ中は一時停止、アガリ/ゲームオーバー時に停止
+
+### 効果音
+
+| ファイル | 発火タイミング |
+|---|---|
+| `assets/audio/sfx_win.wav` | アガリ確定時 |
+| `assets/audio/sfx_gameover.wav` | ゲームオーバー時（ループ） |
+| `assets/audio/sfx_tenpai.wav` | テンパイ成立時（1回のみ） |
+| `assets/audio/sfx_meld.wav` | メンツ完成時（350ms クールダウン） |
+
+### 音声ファイルの再生成
+
+```bash
+cd assets/audio
+python3 gen_bgm.py   # BGM 3曲
+python3 gen_sfx.py   # 効果音4種
+```
+
+---
+
 ## ビルド
 
 ### 前提
