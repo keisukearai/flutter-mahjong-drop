@@ -1,4 +1,4 @@
-package com.example.mahjong_drop_v2
+package com.keisukearai.mahjongdrop
 
 import io.flutter.embedding.android.FlutterActivity
 
