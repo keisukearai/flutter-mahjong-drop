@@ -381,7 +381,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Copy missing dSYMs (e.g. objective_c.framework) into the archive\nif [ -n \"${DWARF_DSYM_FOLDER_PATH}\" ]; then\n  find \"${BUILT_PRODUCTS_DIR}\" -maxdepth 1 -name \"*.dSYM\" | while read -r dsym; do\n    name=$(basename \"${dsym}\")\n    if [ ! -d \"${DWARF_DSYM_FOLDER_PATH}/${name}\" ]; then\n      cp -r \"${dsym}\" \"${DWARF_DSYM_FOLDER_PATH}/\"\n    fi\n  done\nfi\n";
+			shellScript = "# Generate dSYM for objective_c.framework (Flutter native asset)\nFRAMEWORK_NAME=\"objective_c.framework\"\nDSYM_OUTPUT=\"${DWARF_DSYM_FOLDER_PATH}/${FRAMEWORK_NAME}.dSYM\"\n\nFRAMEWORK_BINARY=\"\"\nfor search_path in \\\n    \"${BUILT_PRODUCTS_DIR}/${FRAMEWORK_NAME}/objective_c\" \\\n    \"${BUILT_PRODUCTS_DIR}/Runner.app/Frameworks/${FRAMEWORK_NAME}/objective_c\" \\\n    \"${SRCROOT}/../build/native_assets/ios/${FRAMEWORK_NAME}/objective_c\"; do\n  if [ -f \"${search_path}\" ]; then\n    FRAMEWORK_BINARY=\"${search_path}\"\n    break\n  fi\ndone\n\nif [ -n \"${FRAMEWORK_BINARY}\" ] && [ ! -d \"${DSYM_OUTPUT}\" ]; then\n  xcrun dsymutil \"${FRAMEWORK_BINARY}\" -o \"${DSYM_OUTPUT}\" 2>/dev/null || true\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
