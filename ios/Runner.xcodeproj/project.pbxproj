@@ -200,6 +200,7 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
+				C8D13CBBB79F4E80A21CADE6 /* Copy dSYMs to archive */,
 				F56B069FC851BEE379E4AEB9 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
@@ -363,6 +364,24 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		C8D13CBBB79F4E80A21CADE6 /* Copy dSYMs to archive */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy dSYMs to archive";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Copy missing dSYMs (e.g. objective_c.framework) into the archive\nif [ -n \"${DWARF_DSYM_FOLDER_PATH}\" ]; then\n  find \"${BUILT_PRODUCTS_DIR}\" -maxdepth 1 -name \"*.dSYM\" | while read -r dsym; do\n    name=$(basename \"${dsym}\")\n    if [ ! -d \"${DWARF_DSYM_FOLDER_PATH}/${name}\" ]; then\n      cp -r \"${dsym}\" \"${DWARF_DSYM_FOLDER_PATH}/\"\n    fi\n  done\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
