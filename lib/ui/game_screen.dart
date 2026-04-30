@@ -118,33 +118,36 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            GameWidget(game: _game),
-            if (_ctrl.status == GameStatus.playing)
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              GameWidget(game: _game),
+              if (_ctrl.status == GameStatus.playing)
+                Positioned(
+                  top: 6,
+                  right: 50,
+                  child: _PauseButton(
+                    isPaused: _ctrl.isPaused,
+                    onTap: _ctrl.togglePause,
+                  ),
+                ),
               Positioned(
                 top: 6,
-                right: 50,
-                child: _PauseButton(
-                  isPaused: _ctrl.isPaused,
-                  onTap: _ctrl.togglePause,
-                ),
+                right: 8,
+                child: _HomeButton(onTap: () => _confirmBack(context)),
               ),
-            Positioned(
-              top: 6,
-              right: 8,
-              child: _HomeButton(onTap: () => _confirmBack(context)),
-            ),
-            if (_ctrl.isTenpai && _ctrl.status == GameStatus.playing && !_ctrl.isPaused)
-              const _TenpaiBanner(),
-            if (_ctrl.status == GameStatus.winAnimation)
-              WinOverlay(controller: _ctrl),
-            if (_ctrl.status == GameStatus.gameOver)
-              GameOverOverlay(controller: _ctrl),
-          ],
+              if (_ctrl.isTenpai && _ctrl.status == GameStatus.playing && !_ctrl.isPaused)
+                const _TenpaiBanner(),
+              if (_ctrl.status == GameStatus.winAnimation)
+                WinOverlay(controller: _ctrl),
+              if (_ctrl.status == GameStatus.gameOver)
+                GameOverOverlay(controller: _ctrl),
+            ],
+          ),
         ),
       ),
     );
