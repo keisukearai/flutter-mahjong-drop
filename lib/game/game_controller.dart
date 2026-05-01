@@ -106,10 +106,24 @@ class GameController extends ChangeNotifier {
     return pool[_random.nextInt(pool.length)];
   }
 
+  // Weighted random column: triangular distribution centered on middle
+  // e.g. 7 cols → weights [1,2,3,4,3,2,1], center gets ~4x the edge chance
+  int _randomStartCol() {
+    final center = numCols ~/ 2;
+    final weights = List.generate(numCols, (i) => center + 1 - (i - center).abs());
+    final total = weights.reduce((a, b) => a + b);
+    int r = _random.nextInt(total);
+    for (int i = 0; i < numCols; i++) {
+      r -= weights[i];
+      if (r < 0) return i;
+    }
+    return center;
+  }
+
   void _spawnNext() {
     fallingTile = nextTiles.removeAt(0);
     nextTiles.add(_pickTile());
-    fallingCol = numCols ~/ 2;
+    fallingCol = _randomStartCol();
     notifyListeners();
   }
 
