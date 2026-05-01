@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -14,7 +15,12 @@ class FallingTileComponent extends PositionComponent {
   bool _landed = false;
   bool _squishing = false;
   double _targetX = 0;
-  double _velocityY = 0;
+
+  // 解析的キネマティクス用
+  double _elapsed = 0;
+  double _startY = 0;
+  double _startVY = 0;
+  double _cachedLandingY = double.infinity;
 
   FallingTileComponent({
     required this.tile,
@@ -27,18 +33,22 @@ class FallingTileComponent extends PositionComponent {
           anchor: Anchor.topLeft,
         ) {
     _targetX = startX - BoardLayout.tileW / 2;
-    _velocityY = controller.fallSpeed * 0.3;
+    _startY = -BoardLayout.tileH;
+    _startVY = controller.fallSpeed * 0.3;
   }
 
-  // 即座にスナップせず、lerp のターゲットとして設定する
   void snapToColumnX(double cx) {
     _targetX = cx - BoardLayout.tileW / 2;
+    _cachedLandingY = double.infinity; // 列が変わったらキャッシュ無効
   }
 
   double get _landingY {
+    if (_cachedLandingY != double.infinity) return _cachedLandingY;
     final row = controller.board.landingRow(controller.fallingCol);
-    if (row < 0) return BoardLayout.boardOffsetY;
-    return BoardLayout.boardOffsetY + row * (BoardLayout.tileH + BoardLayout.gap);
+    _cachedLandingY = row < 0
+        ? BoardLayout.boardOffsetY
+        : BoardLayout.boardOffsetY + row * (BoardLayout.tileH + BoardLayout.gap);
+    return _cachedLandingY;
   }
 
   @override
@@ -46,19 +56,28 @@ class FallingTileComponent extends PositionComponent {
     super.update(dt);
     if (_landed) return;
 
-    // 水平：ターゲット列へ滑らかに補間
+    // 水平：指数的 lerp（フレームレート独立）
     final dx = _targetX - position.x;
     if (dx.abs() > 0.5) {
-      position.x += dx * (dt * 22.0).clamp(0.0, 1.0);
+      position.x += dx * (1.0 - math.exp(-22.0 * dt));
     } else {
       position.x = _targetX;
     }
 
-    // 垂直：重力加速（30% → 100% of fallSpeed で自然な落下感）
+    // 垂直：解析的キネマティクスで位置を直接計算
+    _elapsed += dt;
     final maxSpeed = controller.fallSpeed;
-    _velocityY += maxSpeed * 6.0 * dt;
-    if (_velocityY > maxSpeed) _velocityY = maxSpeed;
-    position.y += _velocityY * dt;
+    final accel = maxSpeed * 6.0;
+    // v0 + a*t = maxSpeed のとき等速へ切り替わる時刻
+    final tMax = (maxSpeed - _startVY) / accel;
+
+    if (_elapsed <= tMax) {
+      position.y = _startY + _startVY * _elapsed + 0.5 * accel * _elapsed * _elapsed;
+    } else {
+      // tMax 時点の y + 等速移動
+      final yAtTMax = _startY + _startVY * tMax + 0.5 * accel * tMax * tMax;
+      position.y = yAtTMax + maxSpeed * (_elapsed - tMax);
+    }
 
     final targetY = _landingY;
     if (position.y >= targetY) {
