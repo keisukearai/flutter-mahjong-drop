@@ -37,12 +37,23 @@ class SfxService {
     _gameOverPlayer = null;
   }
 
+  static final _sfxCtx = AudioContext(
+    android: const AudioContextAndroid(
+      audioFocus: AndroidAudioFocus.none,
+      usageType: AndroidUsageType.game,
+      contentType: AndroidContentType.sonification,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.ambient,
+    ),
+  );
+
   Future<void> _playOnce(String asset) async {
     try {
       final player = AudioPlayer();
       await player.setReleaseMode(ReleaseMode.release);
       await player.setVolume(0.9);
-      await player.play(AssetSource(asset));
+      await player.play(AssetSource(asset), ctx: _sfxCtx);
       player.onPlayerComplete.listen((_) => player.dispose());
     } catch (_) {}
   }

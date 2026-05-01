@@ -129,12 +129,23 @@ class _GameScreenState extends State<GameScreen> {
               if (_ctrl.status == GameStatus.playing)
                 Positioned(
                   top: 6,
-                  right: 50,
+                  right: 92,
                   child: _PauseButton(
                     isPaused: _ctrl.isPaused,
                     onTap: _ctrl.togglePause,
                   ),
                 ),
+              Positioned(
+                top: 6,
+                right: 50,
+                child: _MuteButton(
+                  isMuted: BgmService.instance.isMuted,
+                  onTap: () {
+                    BgmService.instance.toggleMute();
+                    setState(() {});
+                  },
+                ),
+              ),
               Positioned(
                 top: 6,
                 right: 8,
@@ -236,6 +247,33 @@ class _PauseButton extends StatelessWidget {
         ),
         child: Icon(
           isPaused ? Icons.play_arrow : Icons.pause,
+          color: Colors.white70,
+          size: 20,
+        ),
+      ),
+    );
+  }
+}
+
+class _MuteButton extends StatelessWidget {
+  final bool isMuted;
+  final VoidCallback onTap;
+  const _MuteButton({required this.isMuted, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: const Color(0xCC1A237E),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0x66FFFFFF), width: 1),
+        ),
+        child: Icon(
+          isMuted ? Icons.volume_off : Icons.volume_up,
           color: Colors.white70,
           size: 20,
         ),

@@ -9,6 +9,9 @@ class BgmService {
   GameMode? _currentMode;
   double _currentRate = 1.0;
   int _lastMinFree = 99;
+  bool _isMuted = true;
+
+  bool get isMuted => _isMuted;
 
   static String _assetFor(GameMode mode) => switch (mode) {
         GameMode.easy => 'assets/audio/bgm_easy.wav',
@@ -26,7 +29,7 @@ class BgmService {
       await _player.setVolume(0.5);
       await _player.setAsset(_assetFor(mode));
       await _player.setSpeed(1.0);
-      await _player.play();
+      if (!_isMuted) await _player.play();
     } catch (_) {}
   }
 
@@ -44,9 +47,19 @@ class BgmService {
   }
 
   Future<void> resume() async {
+    if (_isMuted) return;
     try {
       await _player.play();
     } catch (_) {}
+  }
+
+  Future<void> toggleMute() async {
+    _isMuted = !_isMuted;
+    if (_isMuted) {
+      await pause();
+    } else if (_currentMode != null) {
+      await _player.play();
+    }
   }
 
   // minFree: 0(限界)〜10(余裕) → rate: 1.5x〜1.0x
