@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'bgm_service.dart';
 
 class SfxService {
   SfxService._();
@@ -8,10 +9,13 @@ class SfxService {
 
   DateTime? _lastMeld;
 
-  Future<void> playWin() => _playOnce('audio/sfx_win.wav');
-  Future<void> playTenpai() => _playOnce('audio/sfx_tenpai.wav');
+  bool get _isMuted => BgmService.instance.isMuted;
+
+  Future<void> playWin() => _isMuted ? Future.value() : _playOnce('audio/sfx_win.wav');
+  Future<void> playTenpai() => _isMuted ? Future.value() : _playOnce('audio/sfx_tenpai.wav');
 
   Future<void> playMeld() {
+    if (_isMuted) return Future.value();
     final now = DateTime.now();
     if (_lastMeld != null && now.difference(_lastMeld!) < const Duration(milliseconds: 350)) {
       return Future.value();
@@ -21,6 +25,7 @@ class SfxService {
   }
 
   Future<void> playGameOver() async {
+    if (_isMuted) return;
     try {
       _gameOverPlayer = AudioPlayer();
       await _gameOverPlayer!.setReleaseMode(ReleaseMode.loop);
