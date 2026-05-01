@@ -37,63 +37,27 @@ class WinResult {
 
 class WinDetector {
   /// Returns a WinResult if the board contains ≥4 meld blocks + a pair of
-  /// individual tiles, and each tile type is used at most 4 times (standard
-  /// mahjong rule). Returns null otherwise.
+  /// individual tiles. Returns null otherwise.
   static WinResult? detect(BoardState board) {
     final melds = board.meldGroups;
     if (melds.length < 4) return null;
 
     final individuals = _collectIndividualTilePositions(board);
 
-    // Try each candidate pair, then find 4 melds that keep tile counts ≤ 4.
     for (final entry in individuals.entries) {
       if (entry.value.length < 2) continue;
-      final pairTile = entry.key;
-      final selected = _selectValidMelds(melds, pairTile);
-      if (selected != null) {
-        return WinResult(
-          melds: selected,
-          pairTile: pairTile,
-          pairPositions: entry.value.take(2).toList(),
-        );
-      }
+      return WinResult(
+        melds: melds.take(4).toList(),
+        pairTile: entry.key,
+        pairPositions: entry.value.take(2).toList(),
+      );
     }
     return null;
-  }
-
-  /// Returns 4 melds whose tile counts, combined with the pair, do not exceed
-  /// 4 per tile type. Returns null if no such combination exists.
-  static List<MeldGroup>? _selectValidMelds(List<MeldGroup> melds, Tile pairTile) {
-    for (final combo in _combinations(melds, 4)) {
-      if (_isValidHand(combo, pairTile)) return combo;
-    }
-    return null;
-  }
-
-  static bool _isValidHand(List<MeldGroup> melds, Tile pairTile) {
-    final count = <Tile, int>{};
-    for (final g in melds) {
-      for (final t in g.meld.tiles) {
-        count[t] = (count[t] ?? 0) + 1;
-      }
-    }
-    count[pairTile] = (count[pairTile] ?? 0) + 2;
-    return count.values.every((c) => c <= 4);
-  }
-
-  static Iterable<List<T>> _combinations<T>(List<T> list, int k) sync* {
-    if (k == 0) { yield []; return; }
-    if (list.length < k) return;
-    for (int i = 0; i <= list.length - k; i++) {
-      for (final rest in _combinations(list.sublist(i + 1), k - 1)) {
-        yield [list[i], ...rest];
-      }
-    }
   }
 
   /// Returns true when the board is in tenpai:
-  /// - 4+ melds formed, one individual tile needs a match to complete the pair, or
-  /// - 3 melds formed and a pair already exists (waiting for 4th meld).
+  /// - 4+ melds formed (waiting for any pair to complete the hand), or
+  /// - 3+ melds formed and a pair already exists (waiting for 4th meld).
   static bool isTenpai(BoardState board) {
     if (detect(board) != null) return false;
 
@@ -101,20 +65,12 @@ class WinDetector {
     final individuals = _collectIndividualTilePositions(board);
 
     if (melds.length >= 4) {
-      for (final entry in individuals.entries) {
-        if (entry.value.isEmpty) continue;
-        if (_selectValidMelds(melds, entry.key) != null) return true;
-      }
-      return false;
+      // 4メルド以上あれば雀頭待ちでテンパイ（個別牌がなくても次のペアで和了できる）
+      return true;
     }
 
     if (melds.length >= 3) {
-      for (final entry in individuals.entries) {
-        if (entry.value.length < 2) continue;
-        for (final combo in _combinations(melds, 3)) {
-          if (_isValidHand(combo, entry.key)) return true;
-        }
-      }
+      return individuals.values.any((p) => p.length >= 2);
     }
 
     return false;
@@ -146,18 +102,56 @@ class WinDetector {
     int han = 0;
     final yaku = <String>[];
 
-    // 字一色 (役満): 全牌が字牌
+    // 字一色 (役満): 全牌が字牌かつ同種刻子の重複なし
     if (allTiles.every((t) => t.isHonor)) {
-      yakumanCount++;
-      yaku.add('字一色');
+      final seen = <Tile>{};
+      final noDuplicate = melds
+          .where((g) => g.meld.isTriplet)
+          .every((g) => seen.add(g.meld.tiles.first));
+      if (noDuplicate) {
+        yakumanCount++;
+        yaku.add('字一色');
+      }
     }
 
-    // 大三元 (役満): 三元牌3種すべてが刻子
-    final dragonTriplets = melds.where((g) =>
-        g.meld.isTriplet && g.meld.tiles.first.isDragon).length;
-    if (dragonTriplets >= 3) {
+    // 三元牌の刻子を種別ごとに集計（重複カウント）
+    final dragonTripletCounts = <HonorType, int>{};
+    for (final g in melds.where((g) => g.meld.isTriplet && g.meld.tiles.first.isDragon)) {
+      final h = g.meld.tiles.first.honor!;
+      dragonTripletCounts[h] = (dragonTripletCounts[h] ?? 0) + 1;
+    }
+
+    // 大三元 (役満): 白・発・中がそれぞれちょうど1つずつの刻子（重複不可）
+    if (dragonTripletCounts[HonorType.haku] == 1 &&
+        dragonTripletCounts[HonorType.hatsu] == 1 &&
+        dragonTripletCounts[HonorType.chun] == 1) {
       yakumanCount++;
       yaku.add('大三元');
+    }
+
+    // 風牌の刻子を種別ごとに集計（重複カウント）
+    const windTypes = [HonorType.east, HonorType.south, HonorType.west, HonorType.north];
+    final windTripletCounts = <HonorType, int>{};
+    for (final g in melds.where((g) => g.meld.isTriplet && g.meld.tiles.first.isHonor &&
+        !g.meld.tiles.first.isDragon)) {
+      final h = g.meld.tiles.first.honor!;
+      windTripletCounts[h] = (windTripletCounts[h] ?? 0) + 1;
+    }
+
+    // 大四喜 (役満): 四種の風牌すべてがちょうど1つずつの刻子
+    if (windTypes.every((w) => windTripletCounts[w] == 1)) {
+      yakumanCount++;
+      yaku.add('大四喜');
+    } else {
+      // 小四喜 (役満): 三種の風牌が刻子（重複なし）かつ残り一種が雀頭
+      final pairHonor = result.pairTile.honor;
+      if (pairHonor != null && windTypes.contains(pairHonor)) {
+        if (windTripletCounts[pairHonor] == null &&
+            windTypes.where((w) => w != pairHonor).every((w) => windTripletCounts[w] == 1)) {
+          yakumanCount++;
+          yaku.add('小四喜');
+        }
+      }
     }
 
     if (yakumanCount == 0) {
@@ -183,24 +177,27 @@ class WinDetector {
         yaku.add('対々和 2翻');
       }
 
-      // 三元牌各1翻 (白・發・中)
-      for (final g in melds) {
-        if (g.meld.isTriplet && g.meld.tiles.first.isDragon) {
-          final h = g.meld.tiles.first.honor!;
-          final name = h == HonorType.haku
-              ? '白'
-              : h == HonorType.hatsu
-                  ? '發'
-                  : '中';
-          han += 1;
-          yaku.add('$name 1翻');
-        }
+      // 三元牌各1翻 (白・發・中)：同一種が複数あっても1翻のみ
+      for (final honor in dragonTripletCounts.keys) {
+        final name = honor == HonorType.haku
+            ? '白'
+            : honor == HonorType.hatsu
+                ? '發'
+                : '中';
+        han += 1;
+        yaku.add('$name 1翻');
       }
 
       // 断么九 (1翻): 2〜8の数牌のみ
       if (allTiles.every((t) => t.isSimple)) {
         han += 1;
         yaku.add('断么九 1翻');
+      }
+
+      // つも (1翻): 他に役がない場合の基本和了
+      if (han == 0) {
+        han += 1;
+        yaku.add('自摸和 1翻');
       }
     }
 
