@@ -13,6 +13,8 @@ class FallingTileComponent extends PositionComponent {
 
   bool _landed = false;
   bool _squishing = false;
+  double _targetX = 0;
+  double _velocityY = 0;
 
   FallingTileComponent({
     required this.tile,
@@ -23,10 +25,14 @@ class FallingTileComponent extends PositionComponent {
           position: Vector2(startX - BoardLayout.tileW / 2, -BoardLayout.tileH),
           size: Vector2(BoardLayout.tileW, BoardLayout.tileH),
           anchor: Anchor.topLeft,
-        );
+        ) {
+    _targetX = startX - BoardLayout.tileW / 2;
+    _velocityY = controller.fallSpeed * 0.3;
+  }
 
+  // 即座にスナップせず、lerp のターゲットとして設定する
   void snapToColumnX(double cx) {
-    position.x = cx - BoardLayout.tileW / 2;
+    _targetX = cx - BoardLayout.tileW / 2;
   }
 
   double get _landingY {
@@ -40,7 +46,20 @@ class FallingTileComponent extends PositionComponent {
     super.update(dt);
     if (_landed) return;
 
-    position.y += controller.fallSpeed * dt;
+    // 水平：ターゲット列へ滑らかに補間
+    final dx = _targetX - position.x;
+    if (dx.abs() > 0.5) {
+      position.x += dx * (dt * 22.0).clamp(0.0, 1.0);
+    } else {
+      position.x = _targetX;
+    }
+
+    // 垂直：重力加速（30% → 100% of fallSpeed で自然な落下感）
+    final maxSpeed = controller.fallSpeed;
+    _velocityY += maxSpeed * 6.0 * dt;
+    if (_velocityY > maxSpeed) _velocityY = maxSpeed;
+    position.y += _velocityY * dt;
+
     final targetY = _landingY;
     if (position.y >= targetY) {
       position.y = targetY;
