@@ -10,7 +10,7 @@ import 'components/board_component.dart';
 import 'components/falling_tile_component.dart';
 import 'components/tile_painter.dart';
 
-class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
+class MahjongGame extends FlameGame with PanDetector {
   final GameController controller;
 
   late final BoardComponent _board;
@@ -19,6 +19,9 @@ class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
 
   // Drag tracking
   double _dragAccum = 0;
+  double _panMoveAccum = 0;
+  double _panStartX = 0;
+  static const _kTapThreshold = 8.0;
 
   MahjongGame(this.controller);
 
@@ -90,8 +93,16 @@ class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
   // ── Input ─────────────────────────────────────────────────────────
 
   @override
+  void onPanStart(DragStartInfo info) {
+    _panStartX = info.eventPosition.global.x;
+    _panMoveAccum = 0;
+    _dragAccum = 0;
+  }
+
+  @override
   void onPanUpdate(DragUpdateInfo info) {
     if (!controller.isPlaying) return;
+    _panMoveAccum += info.delta.global.x.abs() + info.delta.global.y.abs();
     _dragAccum += info.delta.global.x;
     final threshold = BoardLayout.tileW + BoardLayout.gap;
     while (_dragAccum > threshold) {
@@ -105,12 +116,11 @@ class MahjongGame extends FlameGame with TapCallbacks, PanDetector {
   }
 
   @override
-  void onPanEnd(DragEndInfo info) => _dragAccum = 0;
-
-  @override
-  void onTapDown(TapDownEvent event) {
-    if (!controller.isPlaying) return;
-    final x = event.canvasPosition.x;
+  void onPanEnd(DragEndInfo info) {
+    _dragAccum = 0;
+    // 移動量が小さければタップとして扱う
+    if (_panMoveAccum > _kTapThreshold || !controller.isPlaying) return;
+    final x = _panStartX;
     final tileCenterX = _colX(controller.fallingCol);
     final halfTile = BoardLayout.tileW / 2;
     if (x < tileCenterX - halfTile) {
