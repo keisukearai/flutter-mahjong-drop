@@ -18,7 +18,6 @@ class MahjongGame extends FlameGame with PanDetector {
   Tile? _trackedTile;
 
   // Drag tracking
-  double _dragAccum = 0;
   double _panMoveAccum = 0;
   double _panStartX = 0;
   static const _kTapThreshold = 8.0;
@@ -74,7 +73,10 @@ class MahjongGame extends FlameGame with PanDetector {
       return;
     }
     if (identical(_trackedTile, tile)) {
-      _fallingComp?.snapToColumnX(_colX(controller.fallingCol));
+      // ドラッグ中は snapToColumnX を呼ばない（指追従を妨げないよう）
+      if (!(_fallingComp?.isDragging ?? false)) {
+        _fallingComp?.snapToColumnX(_colX(controller.fallingCol));
+      }
       return;
     }
     _fallingComp?.removeFromParent();
@@ -84,8 +86,22 @@ class MahjongGame extends FlameGame with PanDetector {
       startX: _colX(controller.fallingCol),
       controller: controller,
       getColumnX: _colX,
+      syncCol: _syncControllerToCol,
     );
     add(_fallingComp!);
+  }
+
+  /// controller.fallingCol を targetCol に揃える（moveLeft/Right のループ）
+  void _syncControllerToCol(int targetCol) {
+    final diff = targetCol - controller.fallingCol;
+    if (diff == 0) return;
+    for (int i = 0; i < diff.abs(); i++) {
+      if (diff > 0) {
+        controller.moveRight();
+      } else {
+        controller.moveLeft();
+      }
+    }
   }
 
   double _colX(int col) => BoardLayout.colX(col, size.x);
@@ -96,42 +112,46 @@ class MahjongGame extends FlameGame with PanDetector {
   void onPanStart(DragStartInfo info) {
     _panStartX = info.eventPosition.global.x;
     _panMoveAccum = 0;
-    _dragAccum = 0;
+    _fallingComp?.startDrag(info.eventPosition.global.x);
   }
 
   @override
   void onPanUpdate(DragUpdateInfo info) {
     if (!controller.isPlaying) return;
     _panMoveAccum += info.delta.global.x.abs() + info.delta.global.y.abs();
-    _dragAccum += info.delta.global.x;
-    final threshold = BoardLayout.tileW + BoardLayout.gap;
-    while (_dragAccum > threshold) {
-      controller.moveRight();
-      _dragAccum -= threshold;
-    }
-    while (_dragAccum < -threshold) {
-      controller.moveLeft();
-      _dragAccum += threshold;
-    }
+    // 指の絶対座標を直接コンポーネントに渡す
+    _fallingComp?.setDragX(info.eventPosition.global.x);
   }
 
   @override
   void onPanEnd(DragEndInfo info) {
-    _dragAccum = 0;
-    // 移動量が小さければタップとして扱う
-    if (_panMoveAccum > _kTapThreshold || !controller.isPlaying) return;
-    final x = _panStartX;
-    final tileCenterX = _colX(controller.fallingCol);
-    final halfTile = BoardLayout.tileW / 2;
-    if (x < tileCenterX - halfTile) {
-      controller.moveLeft();
-    } else if (x > tileCenterX + halfTile) {
-      controller.moveRight();
-    } else {
-      _fallingComp?.removeFromParent();
-      _fallingComp = null;
-      _trackedTile = null;
-      controller.dropTile();
+    // 常にドラッグモードを終了
+    _fallingComp?.endDrag();
+
+    if (!controller.isPlaying) return;
+
+    if (_panMoveAccum <= _kTapThreshold) {
+      // 移動量が小さければタップ
+      final x = _panStartX;
+      final tileCenterX = _colX(controller.fallingCol);
+      final halfTile = BoardLayout.tileW / 2;
+      if (x < tileCenterX - halfTile) {
+        controller.moveLeft();
+      } else if (x > tileCenterX + halfTile) {
+        controller.moveRight();
+      } else {
+        _fallingComp?.removeFromParent();
+        _fallingComp = null;
+        _trackedTile = null;
+        controller.dropTile();
+      }
+      return;
+    }
+
+    // スワイプ終了：指が最後にいた最寄り列にスナップ
+    final comp = _fallingComp;
+    if (comp != null) {
+      _syncControllerToCol(comp.nearestColumn);
     }
   }
 }
