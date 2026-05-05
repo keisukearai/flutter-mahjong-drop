@@ -138,7 +138,9 @@ class GameController extends ChangeNotifier {
   }
 
   double get fallSpeed {
-    final baseSpeed = (160.0 + level * 20.0).clamp(0.0, 500.0);
+    final baseSpeed = level <= 10
+        ? 160.0 + level * 20.0
+        : 360.0 + 220.0 * log((level + 1) / 11.0);
 
     // Find the minimum free rows across all columns (most crowded column)
     final minFree = minFreeRows;
